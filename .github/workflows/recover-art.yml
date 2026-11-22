@@ -50,6 +50,15 @@ jobs:
           names = set(extract('illustration-data.js','ART_SIZES'))
           names.update(extract('depth-data.js','DEPTH_SIZES'))
           names.add('paint-chapter-cover')
+          # Additional DxD bloodlines live in integration-data.js, not in the
+          # initial ART_SIZES / DEPTH_SIZES manifests.
+          integration = Path('integration-data.js').read_text(encoding='utf-8')
+          lineages_match = re.search(r'window\.EXTRA_LINEAGES=(\[.*?\]);', integration, flags=re.S)
+          if not lineages_match:
+              raise RuntimeError('Could not locate the extra lineage illustrations manifest.')
+          names.update(entry['art'] for entry in json.loads(lineages_match.group(1)))
+          # Also preserve standalone lineage art registered after the array.
+          names.update(re.findall(r'window\.DEPTH_SIZES\["(heritage-[^"]+)"\]', integration))
           assets = {f'art/{name}.webp' for name in names}
           assets.update({'art/sheet-1.jpg','art/sheet-2.jpg'})
           assets = sorted(assets)
