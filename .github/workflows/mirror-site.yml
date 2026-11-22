@@ -1,0 +1,57 @@
+name: Mirror Six Faced World to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  mirror-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download publicly accessible site
+        run: |
+          set -euo pipefail
+          mkdir -p public
+          wget --recursive --level=3 --page-requisites --adjust-extension \
+            --convert-links --no-parent --no-host-directories \
+            --domains six-faced-world-chronicle-7m3r.majorgrove259.chatgpt.site \
+            --directory-prefix=public \
+            --timeout=30 --tries=2 \
+            https://six-faced-world-chronicle-7m3r.majorgrove259.chatgpt.site/ || true
+          test -s public/index.html || { echo "Could not retrieve index.html. No deployment performed."; exit 1; }
+          echo "Downloaded files:"
+          find public -type f | head -60
+          # Move absolute internal asset URLs into the GitHub Pages project path.
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          prefix = '/Six-Faced-World/'
+          for file in Path('public').rglob('*'):
+              if file.suffix not in {'.html','.css'} or not file.is_file():
+                  continue
+              text = file.read_text(encoding='utf8',errors='replace')
+              text = re.sub(r'(?P<q>["\'])/(?!(?:/|Six-Faced-World/))(?P<path>[^"\']+)(?P=q)', lambda m: m['q'] + prefix + m['path'] + m['q'], text)
+              file.write_text(text, encoding='utf8')
+          PY
+          touch public/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
