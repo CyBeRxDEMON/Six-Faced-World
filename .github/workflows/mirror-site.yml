@@ -56,7 +56,9 @@ jobs:
           set -euo pipefail
           mkdir -p site
           rsync -a --delete public/ site/
-          git add site/
+          # Keep the published website at the repository root too, for branch-based Pages.
+          rsync -a public/ ./
+          git add -A -- . ':(exclude)public'
           if ! git diff --cached --quiet; then
             git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Sync Six Faced World website from public site"
             git push
