@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#191720">
+<meta name="description" content="Create a character in the Six-Faced World of Mushoku Tensei, explore the illustrated atlas, plan your powers, and design a character card.">
+<title>Six-Faced Chronicle · Mushoku Tensei CYOA</title>
+<link rel="icon" href="crest.svg" type="image/svg+xml">
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="atelier.css"><link rel="stylesheet" href="selection.css"><link rel="stylesheet" href="depth.css">
+</head>
+<body>
+<a class="skip" href="index.html#chapter">Skip to character choices</a>
+<header class="mast"><div class="wrap top">
+<a href="index.html#home" class="brand" aria-label="Six-Faced Chronicle home"><img src="crest.svg" alt=""><span>Six-Faced <em>Chronicle</em></span></a>
+<nav class="topnav" aria-label="World navigation"><button class="active" data-act="forge">Character forge</button><button data-act="picks">My choices</button><button data-act="atlas">World atlas</button><button data-act="archive">Source sheets</button></nav>
+<button class="folio" data-act="grimoire"><i data-icon="book"></i><span>My grimoire</span></button>
+</div></header>
+<main id="home">
+<section class="hero forge-hero"><div class="hero-paint" aria-hidden="true"></div><div class="wrap hero-inner">
+<div class="hero-text"><div class="eyebrow flourish"><span></span> MUSHOKU TENSEI · JOBLESS REINCARNATION</div>
+<h1>Choose your<br><em>second life.</em></h1>
+<p>Begin with 100 points, or set your allowance in Rules &amp; points. Choose your lineage, shape your features, and decide which worlds your magic comes from.</p>
+<div class="actions"><button class="gold-btn" data-act="forge"><i data-icon="feather"></i>Browse lineages</button><button class="ghost-btn" data-act="roll"><i data-icon="dice"></i>Roll a build</button></div></div>
+<div id="lineage-deck" class="lineage-deck" aria-label="Illustrated lineage deck"></div>
+</div></section>
+<section class="ledger" aria-label="Remaining character resources"><div id="ledger" class="wrap ledger-inner"></div></section>
+<div class="wrap workbench" id="forge">
+<aside class="contents"><div class="mini side-title"><i data-icon="index"></i> CHAPTERS</div><nav id="chapters" aria-label="Character chapters"></nav><div class="sidefoot"><button data-act="lab"><i data-icon="gem"></i> Power lab</button><button data-act="studio"><i data-icon="feather"></i> Character atelier</button></div></aside>
+<section id="chapter" class="chapter" tabindex="-1" aria-live="off"></section>
+<div id="mobile-extras"></div>
+</div>
+</main>
+<footer><div class="wrap footer-in"><span class="footbrand"><img src="crest.svg" alt=""> Six-Faced Chronicle</span><span>Adapted from the CYOA by 53413760 · v1.1</span><button data-act="archive">Original sheets</button></div></footer>
+<dialog id="modal" aria-labelledby="modal-title"><div class="dialog-shell"><button class="close iconbtn" data-act="close" aria-label="Close dialog"><i data-icon="x"></i></button><div id="modal-body"></div></div></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<input id="import-file" type="file" accept=".json,application/json" hidden>
+<script src="book-one.js"></script><script src="book-two.js"></script><script src="engine.js"></script><script src="depth-data.js"></script><script src="integration-data.js"></script><script src="depth-engine.js"></script><script src="relic.js"></script><script src="casting.js"></script><script src="workshop.js"></script><script src="illustration-data.js"></script><script src="selection.js"></script><script src="figure-mesh.js"></script><script src="figure.js"></script><script src="depth-ui.js"></script><script src="app.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a5e42bd98b62bd21',t:'MTc5NTMxMTA1MQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/Six-Faced-World/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a5e42bd98b62bd21',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body></html>
