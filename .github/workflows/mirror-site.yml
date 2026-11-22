@@ -2,9 +2,12 @@ name: Mirror Six Faced World to GitHub Pages
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/mirror-site.yml'
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -19,6 +22,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout website repository
+        uses: actions/checkout@v4
       - name: Download publicly accessible site
         run: |
           set -euo pipefail
@@ -46,6 +51,16 @@ jobs:
           PY
           touch public/.nojekyll
 
+      - name: Preserve recovered website in GitHub repository
+        run: |
+          set -euo pipefail
+          mkdir -p site
+          rsync -a --delete public/ site/
+          git add site/
+          if ! git diff --cached --quiet; then
+            git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Sync Six Faced World website from public site"
+            git push
+          fi
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
