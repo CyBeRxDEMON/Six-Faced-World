@@ -42,7 +42,7 @@ jobs:
 
           def extract(file,key):
               data = Path(file).read_text(encoding="utf-8")
-              match = re.search(r"window\\." + key + r"\\s*=\\s*(\\{[^\\n]+\\})",data)
+              match = re.search(r"window\." + key + r"\s*=\s*(\{[^\n]+\})",data)
               if not match:
                   raise ValueError(f"Could not parse {key} from {file}")
               return json.loads(match.group(1))
@@ -73,7 +73,7 @@ jobs:
               for n in range(3):
                   try:
                       data,ct=get(source+'/'+name)
-                      ok=(data[:4]==b'RIFF' and data[8:12]==b'WEBP') if name.endswith('.webp') else data[:2]==b'\\xff\\xd8'
+                      ok=(data[:4]==b'RIFF' and data[8:12]==b'WEBP') if name.endswith('.webp') else data[:2]==b'\xff\xd8'
                       if not ok:
                           return ('invalid',name, f'Not an image: {ct}')
                       dst.parent.mkdir(parents=True,exist_ok=True)
