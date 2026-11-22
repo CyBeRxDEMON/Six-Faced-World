@@ -24,33 +24,14 @@ jobs:
     steps:
       - name: Checkout website repository
         uses: actions/checkout@v4
-      - name: Download publicly accessible site
+      - name: Prepare site from source saved in GitHub
         run: |
           set -euo pipefail
+          test -s site/index.html || { echo "Site source missing from repository"; exit 1; }
           mkdir -p public
-          wget --recursive --level=3 --page-requisites --adjust-extension \
-            --convert-links --no-parent --no-host-directories \
-            --domains six-faced-world-chronicle-7m3r.majorgrove259.chatgpt.site \
-            --directory-prefix=public \
-            --timeout=30 --tries=2 \
-            https://six-faced-world-chronicle-7m3r.majorgrove259.chatgpt.site/ || true
-          test -s public/index.html || { echo "Could not retrieve index.html. No deployment performed."; exit 1; }
-          echo "Downloaded files:"
-          find public -type f | head -60
-          # Move absolute internal asset URLs into the GitHub Pages project path.
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          prefix = '/Six-Faced-World/'
-          for file in Path('public').rglob('*'):
-              if file.suffix not in {'.html','.css'} or not file.is_file():
-                  continue
-              text = file.read_text(encoding='utf8',errors='replace')
-              text = re.sub(r'(?P<q>["\'])/(?!(?:/|Six-Faced-World/))(?P<path>[^"\']+)(?P=q)', lambda m: m['q'] + prefix + m['path'] + m['q'], text)
-              file.write_text(text, encoding='utf8')
-          PY
-          touch public/.nojekyll
-
+          rsync -a --delete site/ public/
+          echo "Using the complete saved website source, no external download required."
+          find public -maxdepth 2 -type f | head -45
       - name: Preserve recovered website in GitHub repository
         run: |
           set -euo pipefail
