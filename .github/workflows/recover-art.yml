@@ -1,0 +1,131 @@
+name: Recover missing illustrations
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/recover-art.yml
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download missing original image assets
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from concurrent.futures import ThreadPoolExecutor, as_completed
+          import json, re, time
+          from urllib.request import Request, urlopen
+          from urllib.error import HTTPError, URLError
+
+          source = "https://six-faced-world-chronicle-7m3r.majorgrove259.chatgpt.site"
+          def get(url):
+              req = Request(url,headers={"User-Agent":"Mozilla/5.0 (compatible; site-asset-migration/1.0)", "Accept":"image/avif,image/webp,image/*,*/*;q=0.8"})
+              with urlopen(req,timeout=35) as res:
+                  return res.read(), res.headers.get('Content-Type','')
+
+          def extract(file,key):
+              data = Path(file).read_text(encoding="utf-8")
+              match = re.search(r"window\\." + key + r"\\s*=\\s*(\\{[^\\n]+\\})",data)
+              if not match:
+                  raise ValueError(f"Could not parse {key} from {file}")
+              return json.loads(match.group(1))
+
+          names = set(extract('illustration-data.js','ART_SIZES'))
+          names.update(extract('depth-data.js','DEPTH_SIZES'))
+          names.add('paint-chapter-cover')
+          assets = {f'art/{name}.webp' for name in names}
+          assets.update({'art/sheet-1.jpg','art/sheet-2.jpg'})
+          assets = sorted(assets)
+          Path('art').mkdir(exist_ok=True)
+
+          # Don't attempt mass requests if the source is no longer publicly reachable.
+          probe = 'art/paint-chapter-cover.webp'
+          try:
+              data,ct = get(source+'/'+probe)
+              if not data.startswith(b'RIFF') or data[8:12] != b'WEBP':
+                  raise RuntimeError(f'Unexpected response for original art: {ct}')
+              Path(probe).write_bytes(data)
+              print(f'Original source available: {probe} ({len(data):,} bytes)',flush=True)
+          except HTTPError as e:
+              raise RuntimeError(f'Original ChatGPT Site refuses access to its images (HTTP {e.code}). Make the original site public and rerun this workflow.') from e
+
+          def copy_one(name):
+              dst=Path(name)
+              if dst.is_file() and dst.stat().st_size>128:
+                  return ('kept',name,0)
+              for n in range(3):
+                  try:
+                      data,ct=get(source+'/'+name)
+                      ok=(data[:4]==b'RIFF' and data[8:12]==b'WEBP') if name.endswith('.webp') else data[:2]==b'\\xff\\xd8'
+                      if not ok:
+                          return ('invalid',name, f'Not an image: {ct}')
+                      dst.parent.mkdir(parents=True,exist_ok=True)
+                      dst.write_bytes(data)
+                      return ('saved',name,len(data))
+                  except HTTPError as e:
+                      if e.code in (401,403,404):return ('denied',name,e.code)
+                      if n==2:return ('error',name,e.code)
+                  except Exception as e:
+                      if n==2:return ('error',name,str(e)[:100])
+                  time.sleep(n+1)
+              return ('error',name,'unknown')
+
+          counts={}
+          problems=[]
+          with ThreadPoolExecutor(max_workers=8) as pool:
+              futures={pool.submit(copy_one,n):n for n in assets}
+              for i,f in enumerate(as_completed(futures),1):
+                  status,name,value=f.result()
+                  counts[status]=counts.get(status,0)+1
+                  if status not in ('saved','kept') and len(problems)<30:
+                      problems.append((name,status,value))
+                  if i%50==0:print(f'Processed {i}/{len(assets)} images, {counts}',flush=True)
+          print('Recovery summary:',counts, 'of',len(assets),flush=True)
+          for p in problems:print('Unrecovered:',p,flush=True)
+          if counts.get('saved',0)+counts.get('kept',0)<int(len(assets)*0.85):
+              raise RuntimeError('Most original images could not be retrieved. No site update will be published.')
+          PY
+
+      - name: Save recovered images to the site and repository
+        run: |
+          mkdir -p site/art
+          rsync -a art/ site/art/
+          git add art site/art
+          if ! git diff --cached --quiet; then
+            git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Restore original Six Faced World illustrations"
+            git push
+          fi
+
+      - name: Prepare updated site
+        run: |
+          mkdir -p public
+          rsync -a site/ public/
+          test -s public/index.html
+          touch public/.nojekyll
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - name: Deploy restored site
+        id: deployment
+        uses: actions/deploy-pages@v4
