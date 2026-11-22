@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - '.github/workflows/mirror-site.yml'
+      - 'site/index.html'
+      - 'index.html'
 
 permissions:
   contents: write
